@@ -1,0 +1,90 @@
+from sklearn.linear_model import TweedieRegressor
+import streamlit as st
+from ..base import BaseModel
+
+class TweedieRegressionModel(BaseModel):
+    def __init__(self):
+        super().__init__()
+        self.model = TweedieRegressor()
+    
+    def get_hyperparameters(self):
+        """Return the model's hyperparameters for UI configuration"""
+        return {
+            'power': {
+                'type': 'selectbox',
+                'label': 'Tweedie Power',
+                'options': [0, 1, 1.5, 2, 3],
+                'help': """Tweedie power parameter:
+                - 0: Normal/Gaussian
+                - 1: Poisson
+                - 1.5: Compound Poisson Gamma
+                - 2: Gamma
+                - 3: Inverse Gaussian"""
+            },
+            'alpha': {
+                'type': 'number_input',
+                'label': 'Regularization Strength (alpha)',
+                'min_value': 0.0,
+                'value': 1.0,
+                'step': 0.1,
+                'help': "L2 regularization strength. Higher values mean stronger regularization. Set to 0 to disable regularization."
+            },
+            'fit_intercept': {
+                'type': 'checkbox',
+                'label': 'Fit Intercept',
+                'value': True,
+                'help': "Whether to calculate the intercept for this model."
+            },
+            'link': {
+                'type': 'selectbox',
+                'label': 'Link Function',
+                'options': ['auto', 'identity', 'log', 'inverse'],
+                'help': "Link function relating mean to linear predictor. 'auto' uses default based on power."
+            },
+            'max_iter': {
+                'type': 'number_input',
+                'label': 'Maximum Iterations',
+                'min_value': 1,
+                'value': 100,
+                'help': "Maximum number of iterations for the optimization algorithm."
+            },
+            'tol': {
+                'type': 'number_input',
+                'label': 'Convergence Tolerance',
+                'min_value': 0.0,
+                'value': 1e-4,
+                'step': 1e-4,
+                'help': "The tolerance for the optimization algorithm to converge."
+            },
+            'warm_start': {
+                'type': 'checkbox',
+                'label': 'Warm Start',
+                'value': False,
+                'help': "When set to True, reuse the solution of the previous call to fit as initialization."
+            },
+            'verbose': {
+                'type': 'selectbox',
+                'label': 'Verbosity Level',
+                'options': [0, 1, 2],
+                'help': "Controls the amount of logging output. 0: no output, 1: some output, 2: detailed output."
+            }
+        }
+    
+    def train(self, X, y, **kwargs):
+        """Train the model with given data and parameters"""
+        # Create a new dictionary for Tweedie parameters
+        tweedie_params = {}
+        
+        # Add parameters that are valid for TweedieRegressor
+        valid_params = [
+            'power', 'alpha', 'fit_intercept', 'link',
+            'max_iter', 'tol', 'warm_start', 'verbose'
+        ]
+        
+        for param in valid_params:
+            if param in kwargs:
+                tweedie_params[param] = kwargs[param]
+        
+        self.model = TweedieRegressor(**tweedie_params)
+        self.model.fit(X, y)
+        return self.model 
