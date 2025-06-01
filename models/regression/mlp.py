@@ -6,16 +6,51 @@ class MLPRegressionModel(BaseModel):
     def __init__(self):
         super().__init__()
         self.model = MLPRegressor()
+        self.num_hidden_layers = 1  # Default number of hidden layers
     
     def get_hyperparameters(self):
         """Return the model's hyperparameters for UI configuration"""
-        return {
-            'hidden_layer_sizes': {
-                'type': 'selectbox',
-                'label': 'Hidden Layer Sizes',
-                'options': ['(100,)', '(50, 50)', '(100, 50)', '(50, 25)', '(100, 50, 25)'],
-                'help': "Number of neurons in each hidden layer. For example, (100,) means one hidden layer with 100 units."
-            },
+        # First, get the number of hidden layers from the user
+        num_layers = st.number_input(
+            "Number of Hidden Layers",
+            min_value=1,
+            max_value=5,
+            value=self.num_hidden_layers,
+            step=1,
+            help="Number of hidden layers in the neural network"
+        )
+        
+        # Update the number of hidden layers
+        self.num_hidden_layers = num_layers
+        
+        # Create base hyperparameters
+        hyperparameters = {
+            'num_hidden_layers': {
+                'type': 'number_input',
+                'label': 'Number of Hidden Layers',
+                'min_value': 1,
+                'max_value': 5,
+                'value': self.num_hidden_layers,
+                'step': 1,
+                'help': "Number of hidden layers in the neural network"
+            }
+        }
+        
+        # Add dynamic layer size inputs
+        for i in range(self.num_hidden_layers):
+            layer_key = f'layer_{i+1}_size'
+            hyperparameters[layer_key] = {
+                'type': 'number_input',
+                'label': f'Neurons in Layer {i+1}',
+                'min_value': 1,
+                'max_value': 1000,
+                'value': 100 if i == 0 else 50,  # Default values
+                'step': 1,
+                'help': f"Number of neurons in hidden layer {i+1}"
+            }
+        
+        # Add other hyperparameters
+        hyperparameters.update({
             'activation': {
                 'type': 'selectbox',
                 'label': 'Activation Function',
@@ -91,26 +126,24 @@ class MLPRegressionModel(BaseModel):
                 'step': 5,
                 'help': "Maximum number of epochs with no improvement to wait before stopping when early_stopping=True."
             }
-        }
+        })
+        
+        return hyperparameters
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
         # Create a new dictionary for MLP parameters
         mlp_params = {}
         
-        # Convert hidden_layer_sizes from string to tuple
-        if 'hidden_layer_sizes' in kwargs and kwargs['hidden_layer_sizes']:
-            try:
-                hidden_layer_str = kwargs['hidden_layer_sizes']
-                # Remove parentheses and split by comma
-                hidden_layer_str = hidden_layer_str.strip('()')
-                # Filter out empty strings and convert to integers
-                hidden_layer_sizes = tuple(int(x.strip()) for x in hidden_layer_str.split(',') if x.strip())
-                if hidden_layer_sizes:  # Only add if we have valid sizes
-                    mlp_params['hidden_layer_sizes'] = hidden_layer_sizes
-            except (ValueError, AttributeError):
-                # If conversion fails, use default value
-                mlp_params['hidden_layer_sizes'] = (100,)
+        # Construct hidden_layer_sizes from individual layer sizes
+        hidden_layer_sizes = []
+        for i in range(self.num_hidden_layers):
+            layer_key = f'layer_{i+1}_size'
+            if layer_key in kwargs and kwargs[layer_key] is not None:
+                hidden_layer_sizes.append(int(kwargs[layer_key]))
+        
+        if hidden_layer_sizes:
+            mlp_params['hidden_layer_sizes'] = tuple(hidden_layer_sizes)
         
         # Convert batch_size from string to int or 'auto'
         if 'batch_size' in kwargs:
@@ -138,4 +171,10 @@ class MLPRegressionModel(BaseModel):
         
         self.model = MLPRegressor(**mlp_params)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

@@ -80,27 +80,7 @@ class GaussianProcessRegressionModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Get parameters
-        kernel_type = kwargs.get('kernel_type', 'RBF')
-        length_scale = kwargs.get('length_scale', 1.0)
-        alpha = kwargs.get('alpha', 1e-10)
-        optimizer = kwargs.get('optimizer', 'fmin_l_bfgs_b')
-        n_restarts_optimizer = kwargs.get('n_restarts_optimizer', 0)
-        normalize_y = kwargs.get('normalize_y', False)
-        
-        # Create kernel
-        kernel = self._get_kernel(kernel_type, length_scale)
-        
-        # Create and train model
-        self.model = GaussianProcessRegressor(
-            kernel=kernel,
-            alpha=alpha,
-            optimizer=optimizer if optimizer != 'None' else None,
-            n_restarts_optimizer=n_restarts_optimizer,
-            normalize_y=normalize_y,
-            random_state=42
-        )
-        
+        self.model = GaussianProcessRegressor(**kwargs)
         self.model.fit(X, y)
         return self.model
     

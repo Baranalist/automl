@@ -39,13 +39,6 @@ class QuantileRegressionModel(BaseModel):
                 'options': ['highs', 'highs-ds', 'highs-ipm', 'interior-point', 'revised simplex', 'simplex'],
                 'help': "Solver used for underlying linear programming problem."
             },
-            'max_iter': {
-                'type': 'number_input',
-                'label': 'Maximum Iterations',
-                'min_value': 1,
-                'value': 1000,
-                'help': "Maximum number of iterations for the solver (passed through solver_options)."
-            },
             'tol': {
                 'type': 'number_input',
                 'label': 'Solver Tolerance',
@@ -58,28 +51,17 @@ class QuantileRegressionModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Create a new dictionary for Quantile parameters
-        quantile_params = {}
-        
-        # Add parameters that are valid for QuantileRegressor
-        valid_params = [
-            'quantile', 'alpha', 'fit_intercept', 'solver'
-        ]
-        
-        for param in valid_params:
-            if param in kwargs:
-                quantile_params[param] = kwargs[param]
-        
-        # Handle solver options
-        solver_options = {}
-        if 'max_iter' in kwargs:
-            solver_options['maxiter'] = kwargs['max_iter']
+        # Handle tol parameter through solver_options
         if 'tol' in kwargs:
-            solver_options['tol'] = kwargs['tol']
+            tol = kwargs.pop('tol')
+            kwargs['solver_options'] = {'tol': tol}
         
-        if solver_options:
-            quantile_params['solver_options'] = solver_options
-        
-        self.model = QuantileRegressor(**quantile_params)
+        self.model = QuantileRegressor(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

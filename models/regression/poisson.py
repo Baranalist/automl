@@ -55,19 +55,12 @@ class PoissonRegressionModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Create a new dictionary for Poisson parameters
-        poisson_params = {}
-        
-        # Add parameters that are valid for PoissonRegressor
-        valid_params = [
-            'alpha', 'fit_intercept', 'max_iter', 'tol',
-            'warm_start', 'verbose'
-        ]
-        
-        for param in valid_params:
-            if param in kwargs:
-                poisson_params[param] = kwargs[param]
-        
-        self.model = PoissonRegressor(**poisson_params)
+        self.model = PoissonRegressor(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

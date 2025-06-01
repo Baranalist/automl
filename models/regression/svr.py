@@ -86,20 +86,12 @@ class SVRModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Create a new dictionary for SVR parameters
-        svr_params = {}
-        
-        # Add all parameters that are valid for SVR
-        valid_params = [
-            'kernel', 'C', 'epsilon', 'degree', 'gamma',
-            'coef0', 'shrinking', 'tol', 'max_iter'
-        ]
-        
-        # Add parameters
-        for param in valid_params:
-            if param in kwargs:
-                svr_params[param] = kwargs[param]
-        
-        self.model = SVR(**svr_params)
+        self.model = SVR(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

@@ -5,19 +5,17 @@ from ..base import BaseModel
 class RidgeRegressionModel(BaseModel):
     def __init__(self):
         super().__init__()
-        self.model = Ridge()
+        self.model = None
     
     def get_hyperparameters(self):
         """Return the model's hyperparameters for UI configuration"""
         return {
             'alpha': {
-                'type': 'slider',
-                'label': 'Regularization Strength (alpha)',
+                'type': 'number_input',
+                'label': 'Alpha',
                 'min_value': 0.0,
-                'max_value': 100.0,
                 'value': 1.0,
-                'step': 0.01,
-                'help': "Regularization strength. Higher values increase regularization."
+                'help': "Regularization strength; must be a positive float."
             },
             'fit_intercept': {
                 'type': 'checkbox',
@@ -33,37 +31,36 @@ class RidgeRegressionModel(BaseModel):
             },
             'max_iter': {
                 'type': 'number_input',
-                'label': 'Maximum Iterations',
+                'label': 'Max Iterations',
                 'min_value': 1,
-                'value': 1000,
-                'help': "Maximum number of iterations for solvers 'sag', 'lsqr', or 'saga'."
+                'value': None,
+                'help': "Maximum number of iterations for conjugate gradient solver."
             },
             'tol': {
                 'type': 'number_input',
                 'label': 'Tolerance',
                 'min_value': 0.0,
                 'value': 0.001,
-                'step': 0.0001,
-                'help': "Precision tolerance for solver convergence."
+                'help': "Precision of the solution."
             },
             'solver': {
                 'type': 'selectbox',
                 'label': 'Solver',
-                'options': ["auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga"],
-                'help': "Algorithm used to solve the ridge regression."
+                'options': ['auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'],
+                'help': "Solver to use in the computational routines."
             },
             'positive': {
                 'type': 'checkbox',
                 'label': 'Positive Coefficients',
                 'value': False,
-                'help': "If True, restricts coefficients to be ≥ 0. Only supported by solver='saga'."
+                'help': "When set to True, forces the coefficients to be positive."
             },
             'random_state': {
                 'type': 'number_input',
                 'label': 'Random State',
                 'min_value': 0,
-                'value': 42,
-                'help': "Seed for reproducibility. Only used for solver='sag' or 'saga'."
+                'value': None,
+                'help': "Used when solver == 'sag' or 'saga' to shuffle the data."
             }
         }
     
@@ -71,4 +68,10 @@ class RidgeRegressionModel(BaseModel):
         """Train the model with given data and parameters"""
         self.model = Ridge(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

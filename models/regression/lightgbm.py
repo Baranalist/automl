@@ -1,12 +1,46 @@
 from lightgbm import LGBMRegressor
 import streamlit as st
 from ..base import BaseModel
+import re
 
 class LightGBMModel(BaseModel):
     def __init__(self):
         super().__init__()
         self.model = LGBMRegressor()
+        self.feature_names = None
     
+    def _clean_feature_names(self, X):
+        """Clean feature names to be LightGBM compatible"""
+        if hasattr(X, 'columns'):
+            # Create a mapping of old names to new names
+            name_mapping = {}
+            new_columns = []
+            
+            for col in X.columns:
+                # Replace special characters with underscore
+                new_name = re.sub(r'[^a-zA-Z0-9_]', '_', str(col))
+                # Ensure name starts with a letter or underscore
+                if not new_name[0].isalpha() and new_name[0] != '_':
+                    new_name = 'f_' + new_name
+                # Ensure name is unique
+                base_name = new_name
+                counter = 1
+                while new_name in new_columns:
+                    new_name = f"{base_name}_{counter}"
+                    counter += 1
+                
+                name_mapping[col] = new_name
+                new_columns.append(new_name)
+            
+            # Store the mapping for later use
+            self.feature_names = name_mapping
+            
+            # Create a copy of X with new column names
+            X_clean = X.copy()
+            X_clean.columns = new_columns
+            return X_clean
+        return X
+
     def get_hyperparameters(self):
         """Return the model's hyperparameters for UI configuration"""
         return {
@@ -158,6 +192,9 @@ class LightGBMModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
+        # Clean feature names
+        X_clean = self._clean_feature_names(X)
+        
         # Create a new dictionary for LightGBM parameters
         lgb_params = {}
         
@@ -175,5 +212,13 @@ class LightGBMModel(BaseModel):
                 lgb_params[param] = kwargs[param]
         
         self.model = LGBMRegressor(**lgb_params)
-        self.model.fit(X, y)
-        return self.model 
+        self.model.fit(X_clean, y)
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        # Clean feature names for prediction
+        X_clean = self._clean_feature_names(X)
+        return self.model.predict(X_clean) 

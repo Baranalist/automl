@@ -94,38 +94,29 @@ class RANSACModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Create a new dictionary for RANSAC parameters
-        ransac_params = {}
+        # Handle min_samples parameter
+        if 'min_samples' in kwargs:
+            min_samples_type = kwargs.pop('min_samples')
+            if min_samples_type == 'fraction':
+                min_samples = kwargs.pop('min_samples_fraction', 0.5)
+            else:  # absolute
+                min_samples = kwargs.pop('min_samples_absolute', 10)
+            kwargs['min_samples'] = min_samples
         
-        # Handle min_samples based on the selected type
-        min_samples_type = kwargs.pop('min_samples', 'fraction')
-        if min_samples_type == 'fraction':
-            ransac_params['min_samples'] = kwargs.pop('min_samples_fraction', 0.5)
-        else:
-            ransac_params['min_samples'] = kwargs.pop('min_samples_absolute', 10)
+        # Remove any unexpected parameters
+        expected_params = {
+            'min_samples', 'residual_threshold', 'max_trials', 'max_skips',
+            'stop_n_inliers', 'stop_score', 'stop_probability', 'loss',
+            'random_state'
+        }
+        kwargs = {k: v for k, v in kwargs.items() if k in expected_params}
         
-        # Set default estimator to LinearRegression
-        ransac_params['estimator'] = LinearRegression()
-        
-        # Add other parameters that are valid for RANSACRegressor
-        valid_params = [
-            'residual_threshold', 'max_trials', 'max_skips',
-            'stop_n_inliers', 'stop_score', 'stop_probability',
-            'loss', 'random_state'
-        ]
-        
-        for param in valid_params:
-            if param in kwargs:
-                value = kwargs[param]
-                # Handle special cases for optional parameters
-                if param == 'stop_n_inliers' and value == 0:
-                    continue  # Skip this parameter if set to 0
-                elif param == 'stop_score' and value == 0.0:
-                    continue  # Skip this parameter if set to 0.0
-                elif param == 'residual_threshold' and value == 0.0:
-                    continue  # Skip this parameter if set to 0.0
-                ransac_params[param] = value
-        
-        self.model = RANSACRegressor(**ransac_params)
+        self.model = RANSACRegressor(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

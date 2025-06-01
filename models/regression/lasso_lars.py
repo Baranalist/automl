@@ -76,28 +76,7 @@ class LassoLARSModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Get parameters
-        alpha = kwargs.get('alpha', 1.0)
-        fit_intercept = kwargs.get('fit_intercept', True)
-        verbose = kwargs.get('verbose', 0)
-        precompute = kwargs.get('precompute', 'auto')
-        max_iter = kwargs.get('max_iter', 500)
-        eps = kwargs.get('eps', 1e-6)
-        copy_X = kwargs.get('copy_X', True)
-        fit_path = kwargs.get('fit_path', True)
-        
-        # Create and train model
-        self.model = LassoLars(
-            alpha=alpha,
-            fit_intercept=fit_intercept,
-            verbose=verbose,
-            precompute=precompute,
-            max_iter=max_iter,
-            eps=eps,
-            copy_X=copy_X,
-            fit_path=fit_path
-        )
-        
+        self.model = LassoLars(**kwargs)
         self.model.fit(X, y)
         return self.model
     

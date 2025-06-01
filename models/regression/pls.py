@@ -55,29 +55,7 @@ class PLSRegressionModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Get parameters
-        n_components = kwargs.get('n_components', 2)
-        scale = kwargs.get('scale', True)
-        max_iter = kwargs.get('max_iter', 500)
-        tol = kwargs.get('tol', 1e-6)
-        copy = kwargs.get('copy', True)
-        
-        # Ensure n_components doesn't exceed number of features
-        if isinstance(X, pd.DataFrame):
-            n_features = X.shape[1]
-        else:
-            n_features = X.shape[1]
-        n_components = min(n_components, n_features)
-        
-        # Create and train model
-        self.model = PLSRegression(
-            n_components=n_components,
-            scale=scale,
-            max_iter=max_iter,
-            tol=tol,
-            copy=copy
-        )
-        
+        self.model = PLSRegression(**kwargs)
         self.model.fit(X, y)
         return self.model
     

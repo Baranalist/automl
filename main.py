@@ -187,69 +187,128 @@ if st.session_state.conversion_done:
                 if st.session_state.show_advanced:
                     st.write("Advanced Model Parameters")
                     hyperparameters = model.get_hyperparameters()
-                    
-                    # Initialize n_layers in session state if not present
-                    if 'n_layers' not in st.session_state:
-                        st.session_state.n_layers = 2
-                    
-                    # Handle n_layers input with callback
-                    def update_n_layers():
-                        st.session_state.n_layers = st.session_state.n_layers_input
-                    
-                    n_layers = st.number_input(
-                        hyperparameters['n_layers']['label'],
-                        min_value=hyperparameters['n_layers']['min_value'],
-                        max_value=hyperparameters['n_layers']['max_value'],
-                        value=st.session_state.n_layers,
-                        step=hyperparameters['n_layers']['step'],
-                        help=hyperparameters['n_layers']['help'],
-                        key='n_layers_input',
-                        on_change=update_n_layers
-                    )
-                    
-                    # Update hyperparameters with current n_layers
-                    hyperparameters = model.get_hyperparameters()
-                    
-                    # Display other hyperparameters
-                    for param_name, param_config in hyperparameters.items():
-                        if param_name == 'n_layers':  # Skip n_layers as we handled it above
-                            continue
-                            
-                        if param_config['type'] == 'selectbox':
-                            model_params[param_name] = st.selectbox(
-                                param_config['label'],
-                                param_config['options'],
-                                help=param_config['help']
+
+                    # Special handling for MLP Regression dynamic hidden layers
+                    if st.session_state.model_type == "Multilayer Perceptron":
+                        def update_num_layers():
+                            st.session_state._rerun = True  # Dummy variable to force rerun
+
+                        # Number of hidden layers input with callback
+                        if "num_hidden_layers" not in st.session_state:
+                            st.session_state["num_hidden_layers"] = 1
+
+                        num_layers = st.number_input(
+                            "Number of Hidden Layers",
+                            min_value=1,
+                            max_value=100,
+                            value=st.session_state["num_hidden_layers"],
+                            step=1,
+                            key="num_hidden_layers",
+                            on_change=update_num_layers
+                        )
+
+                        # Dynamically create keys and input fields for each layer
+                        layer_sizes = []
+                        for i in range(1, st.session_state["num_hidden_layers"] + 1):
+                            key = f"layer_{i}_size"
+                            if key not in st.session_state:
+                                st.session_state[key] = 64 if i == 1 else 32  # default values
+                            size = st.number_input(
+                                f"Neurons in Layer {i}",
+                                min_value=1,
+                                max_value=1024,
+                                value=st.session_state[key],
+                                step=1,
+                                key=key
                             )
-                        elif param_config['type'] == 'number_input':
-                            model_params[param_name] = st.number_input(
-                                param_config['label'],
-                                min_value=param_config['min_value'],
-                                value=param_config['value'],
-                                help=param_config['help']
-                            )
-                        elif param_config['type'] == 'checkbox':
-                            model_params[param_name] = st.checkbox(
-                                param_config['label'],
-                                value=param_config['value'],
-                                help=param_config['help']
-                            )
-                        elif param_config['type'] == 'radio':
-                            model_params[param_name] = st.radio(
-                                param_config['label'],
-                                param_config['options'],
-                                horizontal=True,
-                                help=param_config['help']
-                            )
-                        elif param_config['type'] == 'slider':
-                            model_params[param_name] = st.slider(
-                                param_config['label'],
-                                min_value=param_config['min_value'],
-                                max_value=param_config['max_value'],
-                                value=param_config['value'],
-                                step=param_config['step'],
-                                help=param_config['help']
-                            )
+                            layer_sizes.append(size)
+
+                        # Remove extra keys if user reduces the number of layers
+                        for i in range(st.session_state["num_hidden_layers"] + 1, 101):
+                            key = f"layer_{i}_size"
+                            if key in st.session_state:
+                                del st.session_state[key]
+
+                        # Save to model parameters
+                        model_params["hidden_layer_sizes"] = tuple(layer_sizes)
+
+                        # Add other hyperparameters as usual
+                        for param_name, param_config in hyperparameters.items():
+                            if param_name.startswith("layer_") or param_name == "num_hidden_layers":
+                                continue  # Already handled
+                            if param_config['type'] == 'selectbox':
+                                model_params[param_name] = st.selectbox(
+                                    param_config['label'],
+                                    param_config['options'],
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'number_input':
+                                model_params[param_name] = st.number_input(
+                                    param_config['label'],
+                                    min_value=param_config['min_value'],
+                                    value=param_config['value'],
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'checkbox':
+                                model_params[param_name] = st.checkbox(
+                                    param_config['label'],
+                                    value=param_config['value'],
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'radio':
+                                model_params[param_name] = st.radio(
+                                    param_config['label'],
+                                    param_config['options'],
+                                    horizontal=True,
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'slider':
+                                model_params[param_name] = st.slider(
+                                    param_config['label'],
+                                    min_value=param_config['min_value'],
+                                    max_value=param_config['max_value'],
+                                    value=param_config['value'],
+                                    step=param_config['step'],
+                                    help=param_config['help']
+                                )
+                    else:
+                        # Display hyperparameters for all other models
+                        for param_name, param_config in hyperparameters.items():
+                            if param_config['type'] == 'selectbox':
+                                model_params[param_name] = st.selectbox(
+                                    param_config['label'],
+                                    param_config['options'],
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'number_input':
+                                model_params[param_name] = st.number_input(
+                                    param_config['label'],
+                                    min_value=param_config['min_value'],
+                                    value=param_config['value'],
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'checkbox':
+                                model_params[param_name] = st.checkbox(
+                                    param_config['label'],
+                                    value=param_config['value'],
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'radio':
+                                model_params[param_name] = st.radio(
+                                    param_config['label'],
+                                    param_config['options'],
+                                    horizontal=True,
+                                    help=param_config['help']
+                                )
+                            elif param_config['type'] == 'slider':
+                                model_params[param_name] = st.slider(
+                                    param_config['label'],
+                                    min_value=param_config['min_value'],
+                                    max_value=param_config['max_value'],
+                                    value=param_config['value'],
+                                    step=param_config['step'],
+                                    help=param_config['help']
+                                )
                 
                 if st.button("Apply"):
                     try:

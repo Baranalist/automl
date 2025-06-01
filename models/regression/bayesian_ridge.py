@@ -10,13 +10,6 @@ class BayesianRidgeModel(BaseModel):
     def get_hyperparameters(self):
         """Return the model's hyperparameters for UI configuration"""
         return {
-            'n_iter': {
-                'type': 'number_input',
-                'label': 'Maximum Iterations',
-                'min_value': 1,
-                'value': 300,
-                'help': "Maximum number of iterations for convergence."
-            },
             'tol': {
                 'type': 'number_input',
                 'label': 'Tolerance',
@@ -101,4 +94,10 @@ class BayesianRidgeModel(BaseModel):
         
         self.model = BayesianRidge(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

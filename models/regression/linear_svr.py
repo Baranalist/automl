@@ -77,21 +77,7 @@ class LinearSVRModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Create a new dictionary for LinearSVR parameters
-        svr_params = {}
-        
-        # Add all parameters that are valid for LinearSVR
-        valid_params = [
-            'epsilon', 'loss', 'dual', 'tol', 'C',
-            'fit_intercept', 'intercept_scaling', 'max_iter'
-        ]
-        
-        # Add parameters
-        for param in valid_params:
-            if param in kwargs:
-                svr_params[param] = kwargs[param]
-        
-        self.model = LinearSVR(**svr_params)
+        self.model = LinearSVR(**kwargs)
         self.model.fit(X, y)
         return self.model
         

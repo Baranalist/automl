@@ -92,4 +92,10 @@ class ElasticNetModel(BaseModel):
         """Train the model with given data and parameters"""
         self.model = ElasticNet(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

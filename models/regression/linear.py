@@ -42,3 +42,7 @@ class LinearRegressionModel(BaseModel):
         self.model = LinearRegression(**kwargs)
         self.model.fit(X, y)
         return self.model 
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        return self.model.predict(X) 

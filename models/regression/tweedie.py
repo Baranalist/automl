@@ -72,19 +72,12 @@ class TweedieRegressionModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Create a new dictionary for Tweedie parameters
-        tweedie_params = {}
-        
-        # Add parameters that are valid for TweedieRegressor
-        valid_params = [
-            'power', 'alpha', 'fit_intercept', 'link',
-            'max_iter', 'tol', 'warm_start', 'verbose'
-        ]
-        
-        for param in valid_params:
-            if param in kwargs:
-                tweedie_params[param] = kwargs[param]
-        
-        self.model = TweedieRegressor(**tweedie_params)
+        self.model = TweedieRegressor(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 

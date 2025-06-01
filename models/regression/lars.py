@@ -67,26 +67,7 @@ class LARSRegressionModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Get parameters
-        fit_intercept = kwargs.get('fit_intercept', True)
-        verbose = kwargs.get('verbose', 0)
-        precompute = kwargs.get('precompute', 'auto')
-        n_nonzero_coefs = kwargs.get('n_nonzero_coefs', 500)
-        eps = kwargs.get('eps', 1e-6)
-        copy_X = kwargs.get('copy_X', True)
-        fit_path = kwargs.get('fit_path', True)
-        
-        # Create and train model
-        self.model = Lars(
-            fit_intercept=fit_intercept,
-            verbose=verbose,
-            precompute=precompute,
-            n_nonzero_coefs=n_nonzero_coefs,
-            eps=eps,
-            copy_X=copy_X,
-            fit_path=fit_path
-        )
-        
+        self.model = Lars(**kwargs)
         self.model.fit(X, y)
         return self.model
     

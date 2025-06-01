@@ -59,20 +59,12 @@ class KNNRegressionModel(BaseModel):
     
     def train(self, X, y, **kwargs):
         """Train the model with given data and parameters"""
-        # Create a new dictionary for KNN parameters
-        knn_params = {}
-        
-        # Add all parameters that are valid for KNeighborsRegressor
-        valid_params = [
-            'n_neighbors', 'weights', 'algorithm', 'leaf_size',
-            'p', 'metric'
-        ]
-        
-        # Add parameters
-        for param in valid_params:
-            if param in kwargs:
-                knn_params[param] = kwargs[param]
-        
-        self.model = KNeighborsRegressor(**knn_params)
+        self.model = KNeighborsRegressor(**kwargs)
         self.model.fit(X, y)
-        return self.model 
+        return self.model
+
+    def predict(self, X):
+        """Make predictions using the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+        return self.model.predict(X) 
